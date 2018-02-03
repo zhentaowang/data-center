@@ -521,7 +521,6 @@ public class FlightServiceImpl implements FlightServiceInterface {
      *
      * @param flightPOList
      */
-
     private void parseFromFeeyo(List<FlightPO> flightPOList) throws ParseException {
         for (FlightPO flightPO : flightPOList) {
 //            int count = flightPOMapper.existByFourParams(flightPO.getFlightNo(), flightPO.getDepDate(), flightPO.getDepAirportCode(), flightPO.getArrAirportCode());
