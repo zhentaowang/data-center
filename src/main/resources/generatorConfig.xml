@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration PUBLIC
+"-//mybatis.org//DTD MyBatis Generator Configuration 
+1.0//EN"
+"http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd"
+>
+<generatorConfiguration>
+
+	<classPathEntry location="/Users/tiecheng/Documents/software/dev/apache-maven-3.5.0/repo/mysql/mysql-connector-java/5.1.43/mysql-connector-java-5.1.43.jar" />
+	<!-- 配置数据源和生成的代码所存放的位置 -->
+	<context id="context1" targetRuntime="Mybatis3">
+	 	<!-- 生成的Java文件的编码 -->  
+	    <property name="javaFileEncoding" value="UTF-8"/>  
+
+        <commentGenerator type="com.adatafun.airport.base.data.center.common.MyCommentGenerator">
+			<!-- 是否去除自动生成的注释 true：是 ： false:否 -->
+            <property name="suppressAllComments" value="false" />
+        </commentGenerator>
+      <!-- <commentGenerator type="org.mybatis.generator.internal.DG2CommentGenerator">
+            <property name="suppressAllComments" value="false" />
+        </commentGenerator>-->
+
+		<jdbcConnection driverClass="com.mysql.jdbc.Driver"
+			connectionURL="jdbc:mysql://127.0.0.1:3306/data_center?useUnicode=true" userId="root"
+			password="root" />
+
+		<!-- 所生成的实体类的位置默认资源包src -->
+		<javaModelGenerator targetPackage="com.adatafun.airport.base.data.center.po"
+							targetProject="src/main/java" />
+			
+		<!-- 所生成的sqlMap的影射文件的位置,默认资源包src -->
+		<sqlMapGenerator targetPackage="conf.mybatis.mapper"
+						 targetProject="src/main/resources"/>
+
+		<!-- 指定生成访问映射xml文件的接口所在包和此包在项目中的地址； -->
+		<javaClientGenerator type="XMLMAPPER"
+							 targetPackage="com.adatafun.airport.base.data.center.mapper"
+							 targetProject="src/main/java" />
+
+		<!-- 为哪些表生成代码 tableName:表名 schema:不用填写 -->
+
+		<table schema="" tableName="base_flight" domainObjectName="FlightPO" enableCountByExample="false"
+			   enableUpdateByExample="false" enableDeleteByExample="false"
+			   enableSelectByExample="false" selectByExampleQueryId="false">
+			<ignoreColumn column="create_user"/>
+			<ignoreColumn column="update_user"/>
+			<ignoreColumn column="create_time"/>
+			<ignoreColumn column="update_time"/>
+			<ignoreColumn column="is_deleted"/>
+			<ignoreColumn column="airport_code"/>
+			<ignoreColumn column="language"/>
+		</table>
+
+		<table schema="" tableName="base_customer" domainObjectName="CustomerPO" enableCountByExample="false"
+			   enableUpdateByExample="false" enableDeleteByExample="false"
+			   enableSelectByExample="false" selectByExampleQueryId="false">
+			<ignoreColumn column="create_user"/>
+			<ignoreColumn column="update_user"/>
+			<ignoreColumn column="create_time"/>
+			<ignoreColumn column="update_time"/>
+			<ignoreColumn column="is_deleted"/>
+			<ignoreColumn column="airport_code"/>
+			<ignoreColumn column="language"/>
+		</table>
+
+		<table schema="" tableName="f_custom_flight" domainObjectName="CustomFlightPO" enableCountByExample="false"
+			   enableUpdateByExample="false" enableDeleteByExample="false"
+			   enableSelectByExample="false" selectByExampleQueryId="false">
+			<ignoreColumn column="create_user"/>
+			<ignoreColumn column="update_user"/>
+			<ignoreColumn column="create_time"/>
+			<ignoreColumn column="update_time"/>
+			<ignoreColumn column="is_deleted"/>
+			<ignoreColumn column="airport_code"/>
+			<ignoreColumn column="language"/>
+		</table>
+
+		<table schema="" tableName="f_flight_push" domainObjectName="FlightPushPO" enableCountByExample="false"
+			   enableUpdateByExample="false" enableDeleteByExample="false"
+			   enableSelectByExample="false" selectByExampleQueryId="false">
+			<ignoreColumn column="create_user"/>
+			<ignoreColumn column="update_user"/>
+			<ignoreColumn column="create_time"/>
+			<ignoreColumn column="update_time"/>
+			<ignoreColumn column="is_deleted"/>
+			<ignoreColumn column="airport_code"/>
+			<ignoreColumn column="language"/>
+		</table>
+
+		<table schema="" tableName="operator_data_center_api" domainObjectName="DataCenterApiPO" enableCountByExample="false"
+			   enableUpdateByExample="false" enableDeleteByExample="false"
+			   enableSelectByExample="false" selectByExampleQueryId="false">
+			<ignoreColumn column="create_user"/>
+			<ignoreColumn column="update_user"/>
+			<ignoreColumn column="create_time"/>
+			<ignoreColumn column="update_time"/>
+			<ignoreColumn column="is_deleted"/>
+			<ignoreColumn column="airport_code"/>
+			<ignoreColumn column="language"/>
+		</table>
+
+		<table schema="" tableName="operator_source_api" domainObjectName="SourceApiPO" enableCountByExample="false"
+			   enableUpdateByExample="false" enableDeleteByExample="false"
+			   enableSelectByExample="false" selectByExampleQueryId="false">
+			<ignoreColumn column="create_user"/>
+			<ignoreColumn column="update_user"/>
+			<ignoreColumn column="create_time"/>
+			<ignoreColumn column="update_time"/>
+			<ignoreColumn column="is_deleted"/>
+			<ignoreColumn column="airport_code"/>
+			<ignoreColumn column="language"/>
+		</table>
+
+	</context>
+</generatorConfiguration>
+	

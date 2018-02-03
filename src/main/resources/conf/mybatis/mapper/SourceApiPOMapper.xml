@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.adatafun.base.data.center.mapper.SourceApiPOMapper">
+  <resultMap id="BaseResultMap" type="com.adatafun.base.data.center.po.SourceApiPO">
+    <id column="source_api_id" jdbcType="BIGINT" property="sourceApiId" />
+    <result column="source_name" jdbcType="VARCHAR" property="sourceName" />
+    <result column="api_name" jdbcType="VARCHAR" property="apiName" />
+    <result column="invoke_state" jdbcType="VARCHAR" property="invokeState" />
+    <result column="invoke_result" jdbcType="VARCHAR" property="invokeResult" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    source_api_id, source_name, api_name, invoke_state, invoke_result
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from operator_source_api
+    where source_api_id = #{sourceApiId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from operator_source_api
+    where source_api_id = #{sourceApiId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.adatafun.base.data.center.po.SourceApiPO">
+    insert into operator_source_api (source_api_id, source_name, api_name, 
+      invoke_state, invoke_result)
+    values (#{sourceApiId,jdbcType=BIGINT}, #{sourceName,jdbcType=VARCHAR}, #{apiName,jdbcType=VARCHAR}, 
+      #{invokeState,jdbcType=VARCHAR}, #{invokeResult,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.adatafun.base.data.center.po.SourceApiPO">
+    insert into operator_source_api
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="sourceApiId != null">
+        source_api_id,
+      </if>
+      <if test="sourceName != null">
+        source_name,
+      </if>
+      <if test="apiName != null">
+        api_name,
+      </if>
+      <if test="invokeState != null">
+        invoke_state,
+      </if>
+      <if test="invokeResult != null">
+        invoke_result,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="sourceApiId != null">
+        #{sourceApiId,jdbcType=BIGINT},
+      </if>
+      <if test="sourceName != null">
+        #{sourceName,jdbcType=VARCHAR},
+      </if>
+      <if test="apiName != null">
+        #{apiName,jdbcType=VARCHAR},
+      </if>
+      <if test="invokeState != null">
+        #{invokeState,jdbcType=VARCHAR},
+      </if>
+      <if test="invokeResult != null">
+        #{invokeResult,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.adatafun.base.data.center.po.SourceApiPO">
+    update operator_source_api
+    <set>
+      <if test="sourceName != null">
+        source_name = #{sourceName,jdbcType=VARCHAR},
+      </if>
+      <if test="apiName != null">
+        api_name = #{apiName,jdbcType=VARCHAR},
+      </if>
+      <if test="invokeState != null">
+        invoke_state = #{invokeState,jdbcType=VARCHAR},
+      </if>
+      <if test="invokeResult != null">
+        invoke_result = #{invokeResult,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where source_api_id = #{sourceApiId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.adatafun.base.data.center.po.SourceApiPO">
+    update operator_source_api
+    set source_name = #{sourceName,jdbcType=VARCHAR},
+      api_name = #{apiName,jdbcType=VARCHAR},
+      invoke_state = #{invokeState,jdbcType=VARCHAR},
+      invoke_result = #{invokeResult,jdbcType=VARCHAR}
+    where source_api_id = #{sourceApiId,jdbcType=BIGINT}
+  </update>
+
+  <!-- self -->
+  <sql id="insertName">
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="sourceName != null">
+        source_name,
+      </if>
+      <if test="apiName != null">
+        api_name,
+      </if>
+      <if test="requestParam != null">
+        request_param,
+      </if>
+      <if test="invokeResult != null">
+        invoke_result,
+      </if>
+      <if test="dataNum != null">
+        data_num,
+      </if>
+    </trim>
+  </sql>
+
+  <sql id="insertValue">
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="sourceName != null">
+        #{sourceName,jdbcType=VARCHAR},
+      </if>
+      <if test="apiName != null">
+        #{apiName,jdbcType=VARCHAR},
+      </if>
+      <if test="requestParam != null">
+        #{requestParam,jdbcType=VARCHAR},
+      </if>
+      <if test="invokeResult != null">
+        #{invokeResult,jdbcType=VARCHAR},
+      </if>
+      <if test="dataNum != null">
+        #{dataNum,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </sql>
+
+  <insert id="insertOne" parameterType="com.adatafun.base.data.center.po.SourceApiPO" useGeneratedKeys="true"
+          keyProperty="sourceApiId">
+    INSERT
+    INTO operator_source_api
+    <include refid="insertName"/>
+    VALUES
+    <include refid="insertValue"/>
+  </insert>
+
+</mapper>

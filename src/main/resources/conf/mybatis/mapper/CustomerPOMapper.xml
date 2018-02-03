@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.adatafun.base.data.center.mapper.CustomerPOMapper">
+  <resultMap id="BaseResultMap" type="com.adatafun.base.data.center.po.CustomerPO">
+    <id column="customer_id" jdbcType="BIGINT" property="customerId" />
+    <result column="customer_name" jdbcType="VARCHAR" property="customerName" />
+    <result column="customer_remark" jdbcType="VARCHAR" property="customerRemark" />
+    <result column="customer_url" jdbcType="VARCHAR" property="customerUrl" />
+    <result column="customer_type" jdbcType="SMALLINT" property="customerType" />
+    <result column="customer_total" jdbcType="INTEGER" property="customerTotal" />
+    <result column="customer_code" jdbcType="VARCHAR" property="customerCode" />
+    <result column="app_id" jdbcType="INTEGER" property="appId" />
+    <result column="expiry_date" jdbcType="DATE" property="expiryDate" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    customer_id, customer_name, customer_remark, customer_url, customer_type, customer_total, 
+    customer_code, app_id, expiry_date
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from base_customer
+    where customer_id = #{customerId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from base_customer
+    where customer_id = #{customerId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.adatafun.base.data.center.po.CustomerPO">
+    insert into base_customer (customer_id, customer_name, customer_remark, 
+      customer_url, customer_type, customer_total, 
+      customer_code, app_id, expiry_date
+      )
+    values (#{customerId,jdbcType=BIGINT}, #{customerName,jdbcType=VARCHAR}, #{customerRemark,jdbcType=VARCHAR}, 
+      #{customerUrl,jdbcType=VARCHAR}, #{customerType,jdbcType=SMALLINT}, #{customerTotal,jdbcType=INTEGER}, 
+      #{customerCode,jdbcType=VARCHAR}, #{appId,jdbcType=INTEGER}, #{expiryDate,jdbcType=DATE}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.adatafun.base.data.center.po.CustomerPO">
+    insert into base_customer
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="customerId != null">
+        customer_id,
+      </if>
+      <if test="customerName != null">
+        customer_name,
+      </if>
+      <if test="customerRemark != null">
+        customer_remark,
+      </if>
+      <if test="customerUrl != null">
+        customer_url,
+      </if>
+      <if test="customerType != null">
+        customer_type,
+      </if>
+      <if test="customerTotal != null">
+        customer_total,
+      </if>
+      <if test="customerCode != null">
+        customer_code,
+      </if>
+      <if test="appId != null">
+        app_id,
+      </if>
+      <if test="expiryDate != null">
+        expiry_date,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="customerId != null">
+        #{customerId,jdbcType=BIGINT},
+      </if>
+      <if test="customerName != null">
+        #{customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="customerRemark != null">
+        #{customerRemark,jdbcType=VARCHAR},
+      </if>
+      <if test="customerUrl != null">
+        #{customerUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="customerType != null">
+        #{customerType,jdbcType=SMALLINT},
+      </if>
+      <if test="customerTotal != null">
+        #{customerTotal,jdbcType=INTEGER},
+      </if>
+      <if test="customerCode != null">
+        #{customerCode,jdbcType=VARCHAR},
+      </if>
+      <if test="appId != null">
+        #{appId,jdbcType=INTEGER},
+      </if>
+      <if test="expiryDate != null">
+        #{expiryDate,jdbcType=DATE},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.adatafun.base.data.center.po.CustomerPO">
+    update base_customer
+    <set>
+      <if test="customerName != null">
+        customer_name = #{customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="customerRemark != null">
+        customer_remark = #{customerRemark,jdbcType=VARCHAR},
+      </if>
+      <if test="customerUrl != null">
+        customer_url = #{customerUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="customerType != null">
+        customer_type = #{customerType,jdbcType=SMALLINT},
+      </if>
+      <if test="customerTotal != null">
+        customer_total = #{customerTotal,jdbcType=INTEGER},
+      </if>
+      <if test="customerCode != null">
+        customer_code = #{customerCode,jdbcType=VARCHAR},
+      </if>
+      <if test="appId != null">
+        app_id = #{appId,jdbcType=INTEGER},
+      </if>
+      <if test="expiryDate != null">
+        expiry_date = #{expiryDate,jdbcType=DATE},
+      </if>
+    </set>
+    where customer_id = #{customerId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.adatafun.base.data.center.po.CustomerPO">
+    update base_customer
+    set customer_name = #{customerName,jdbcType=VARCHAR},
+      customer_remark = #{customerRemark,jdbcType=VARCHAR},
+      customer_url = #{customerUrl,jdbcType=VARCHAR},
+      customer_type = #{customerType,jdbcType=SMALLINT},
+      customer_total = #{customerTotal,jdbcType=INTEGER},
+      customer_code = #{customerCode,jdbcType=VARCHAR},
+      app_id = #{appId,jdbcType=INTEGER},
+      expiry_date = #{expiryDate,jdbcType=DATE}
+    where customer_id = #{customerId,jdbcType=BIGINT}
+  </update>
+
+  <!-- by self -->
+
+  <sql id="insertName">
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="customerId != null">
+        customer_id,
+      </if>
+      <if test="customerName != null">
+        customer_name,
+      </if>
+      <if test="customerRemark != null">
+        customer_remark,
+      </if>
+      <if test="customerUrl != null">
+        customer_url,
+      </if>
+      <if test="customerType != null">
+        customer_type,
+      </if>
+      <if test="customerTotal != null">
+        customer_total,
+      </if>
+      <if test="customerCode != null">
+        customer_code,
+      </if>
+      <if test="appId != null">
+        app_id,
+      </if>
+      <if test="expiryDate != null">
+        expiry_date,
+      </if>
+    </trim>
+  </sql>
+
+  <sql id="insertValue">
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="customerId != null">
+        #{customerId,jdbcType=BIGINT},
+      </if>
+      <if test="customerName != null">
+        #{customerName,jdbcType=VARCHAR},
+      </if>
+      <if test="customerRemark != null">
+        #{customerRemark,jdbcType=VARCHAR},
+      </if>
+      <if test="customerUrl != null">
+        #{customerUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="customerType != null">
+        #{customerType,jdbcType=SMALLINT},
+      </if>
+      <if test="customerTotal != null">
+        #{customerTotal,jdbcType=INTEGER},
+      </if>
+      <if test="customerCode != null">
+        #{customerCode,jdbcType=VARCHAR},
+      </if>
+      <if test="appId != null">
+        #{appId,jdbcType=INTEGER},
+      </if>
+      <if test="expiryDate != null">
+        #{expiryDate,jdbcType=DATE},
+      </if>
+    </trim>
+  </sql>
+
+  <resultMap id="base_map" type="com.adatafun.base.data.center.po.CustomerPO">
+    <id column="customer_id" jdbcType="BIGINT" property="customerId" />
+    <result column="customer_name" jdbcType="VARCHAR" property="customerName" />
+    <result column="customer_remark" jdbcType="VARCHAR" property="customerRemark" />
+    <result column="customer_url" jdbcType="VARCHAR" property="customerUrl" />
+    <result column="customer_type" jdbcType="SMALLINT" property="customerType" />
+    <result column="customer_total" jdbcType="INTEGER" property="customerTotal" />
+    <result column="customer_code" jdbcType="VARCHAR" property="customerCode" />
+    <result column="app_id" jdbcType="INTEGER" property="appId" />
+    <result column="expiry_date" jdbcType="DATE" property="expiryDate" />
+  </resultMap>
+
+  <select id="selectByAppId" parameterType="java.lang.Integer" resultMap="base_map">
+    SELECT
+    *
+    FROM
+    base_customer
+    WHERE
+    is_deleted = 0 AND
+    app_id = #{appId,jdbcType=INTEGER}
+  </select>
+
+  <insert id="insertOne" parameterType="com.adatafun.base.data.center.po.CustomerPO" useGeneratedKeys="true" keyProperty="customerId">
+    INSERT INTO base_customer
+    <include refid="insertName"/>
+    VALUES
+    <include refid="insertValue"/>
+  </insert>
+
+</mapper>

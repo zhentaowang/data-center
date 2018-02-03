@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.adatafun.base.data.center.mapper.FlightPushPOMapper">
+  <resultMap id="BaseResultMap" type="com.adatafun.base.data.center.po.FlightPushPO">
+    <id column="flight_push_id" jdbcType="BIGINT" property="flightPushId" />
+    <result column="customer_id" jdbcType="BIGINT" property="customerId" />
+    <result column="is_succeeded" jdbcType="SMALLINT" property="isSucceeded" />
+    <result column="invoke_result" jdbcType="VARCHAR" property="invokeResult" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    flight_push_id, customer_id, is_succeeded, invoke_result
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from f_flight_push
+    where flight_push_id = #{flightPushId,jdbcType=BIGINT}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from f_flight_push
+    where flight_push_id = #{flightPushId,jdbcType=BIGINT}
+  </delete>
+  <insert id="insert" parameterType="com.adatafun.base.data.center.po.FlightPushPO">
+    insert into f_flight_push (flight_push_id, customer_id, is_succeeded, 
+      invoke_result)
+    values (#{flightPushId,jdbcType=BIGINT}, #{customerId,jdbcType=BIGINT}, #{isSucceeded,jdbcType=SMALLINT}, 
+      #{invokeResult,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.adatafun.base.data.center.po.FlightPushPO">
+    insert into f_flight_push
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="flightPushId != null">
+        flight_push_id,
+      </if>
+      <if test="customerId != null">
+        customer_id,
+      </if>
+      <if test="isSucceeded != null">
+        is_succeeded,
+      </if>
+      <if test="invokeResult != null">
+        invoke_result,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="flightPushId != null">
+        #{flightPushId,jdbcType=BIGINT},
+      </if>
+      <if test="customerId != null">
+        #{customerId,jdbcType=BIGINT},
+      </if>
+      <if test="isSucceeded != null">
+        #{isSucceeded,jdbcType=SMALLINT},
+      </if>
+      <if test="invokeResult != null">
+        #{invokeResult,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.adatafun.base.data.center.po.FlightPushPO">
+    update f_flight_push
+    <set>
+      <if test="customerId != null">
+        customer_id = #{customerId,jdbcType=BIGINT},
+      </if>
+      <if test="isSucceeded != null">
+        is_succeeded = #{isSucceeded,jdbcType=SMALLINT},
+      </if>
+      <if test="invokeResult != null">
+        invoke_result = #{invokeResult,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where flight_push_id = #{flightPushId,jdbcType=BIGINT}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.adatafun.base.data.center.po.FlightPushPO">
+    update f_flight_push
+    set customer_id = #{customerId,jdbcType=BIGINT},
+      is_succeeded = #{isSucceeded,jdbcType=SMALLINT},
+      invoke_result = #{invokeResult,jdbcType=VARCHAR}
+    where flight_push_id = #{flightPushId,jdbcType=BIGINT}
+  </update>
+
+  <!-- self -->
+
+  <sql id="insertName">
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="flightPushId != null">
+        flight_push_id,
+      </if>
+      <if test="customerId != null">
+        customer_id,
+      </if>
+      <if test="isSucceeded != null">
+        is_succeeded,
+      </if>
+      <if test="pushContext != null">
+        push_context,
+      </if>
+      <if test="invokeResult != null">
+        invoke_result,
+      </if>
+    </trim>
+  </sql>
+
+  <sql id="insertValue">
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="flightPushId != null">
+        #{flightPushId,jdbcType=BIGINT},
+      </if>
+      <if test="customerId != null">
+        #{customerId,jdbcType=BIGINT},
+      </if>
+      <if test="isSucceeded != null">
+        #{isSucceeded,jdbcType=SMALLINT},
+      </if>
+      <if test="pushContext != null">
+        #{pushContext,jdbcType=VARCHAR},
+      </if>
+      <if test="invokeResult != null">
+        #{invokeResult,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </sql>
+
+  <insert id="insertOne" parameterType="com.adatafun.base.data.center.po.FlightPushPO" useGeneratedKeys="true" keyProperty="flightPushId">
+    INSERT INTO
+    f_flight_push
+    <include refid="insertName"/>
+    VALUES
+    <include refid="insertValue"/>
+  </insert>
+
+</mapper>

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.adatafun.base.data.center.mapper.DataCenterApiPOMapper">
+    <resultMap id="BaseResultMap" type="com.adatafun.base.data.center.po.DataCenterApiPO">
+        <id column="flight_center_api_id" jdbcType="BIGINT" property="flightCenterApiId"/>
+        <result column="api_name" jdbcType="VARCHAR" property="apiName"/>
+        <result column="customer_id" jdbcType="BIGINT" property="customerId"/>
+        <result column="invoke_state" jdbcType="VARCHAR" property="invokeState"/>
+        <result column="invoke_result" jdbcType="VARCHAR" property="invokeResult"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    flight_center_api_id, api_name, customer_id, invoke_state, invoke_result
+  </sql>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from operator_data_center_api
+        where flight_center_api_id = #{flightCenterApiId,jdbcType=BIGINT}
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from operator_data_center_api
+    where flight_center_api_id = #{flightCenterApiId,jdbcType=BIGINT}
+  </delete>
+    <insert id="insert" parameterType="com.adatafun.base.data.center.po.DataCenterApiPO">
+    insert into operator_data_center_api (flight_center_api_id, api_name, customer_id, 
+      invoke_state, invoke_result)
+    values (#{flightCenterApiId,jdbcType=BIGINT}, #{apiName,jdbcType=VARCHAR}, #{customerId,jdbcType=BIGINT}, 
+      #{invokeState,jdbcType=VARCHAR}, #{invokeResult,jdbcType=VARCHAR})
+  </insert>
+    <insert id="insertSelective" parameterType="com.adatafun.base.data.center.po.DataCenterApiPO">
+        insert into operator_data_center_api
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="flightCenterApiId != null">
+                flight_center_api_id,
+            </if>
+            <if test="apiName != null">
+                api_name,
+            </if>
+            <if test="customerId != null">
+                customer_id,
+            </if>
+            <if test="invokeState != null">
+                invoke_state,
+            </if>
+            <if test="invokeResult != null">
+                invoke_result,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="flightCenterApiId != null">
+                #{flightCenterApiId,jdbcType=BIGINT},
+            </if>
+            <if test="apiName != null">
+                #{apiName,jdbcType=VARCHAR},
+            </if>
+            <if test="customerId != null">
+                #{customerId,jdbcType=BIGINT},
+            </if>
+            <if test="invokeState != null">
+                #{invokeState,jdbcType=VARCHAR},
+            </if>
+            <if test="invokeResult != null">
+                #{invokeResult,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.adatafun.base.data.center.po.DataCenterApiPO">
+        update operator_data_center_api
+        <set>
+            <if test="apiName != null">
+                api_name = #{apiName,jdbcType=VARCHAR},
+            </if>
+            <if test="customerId != null">
+                customer_id = #{customerId,jdbcType=BIGINT},
+            </if>
+            <if test="invokeState != null">
+                invoke_state = #{invokeState,jdbcType=VARCHAR},
+            </if>
+            <if test="invokeResult != null">
+                invoke_result = #{invokeResult,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where flight_center_api_id = #{flightCenterApiId,jdbcType=BIGINT}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.adatafun.base.data.center.po.DataCenterApiPO">
+    update operator_data_center_api
+    set api_name = #{apiName,jdbcType=VARCHAR},
+      customer_id = #{customerId,jdbcType=BIGINT},
+      invoke_state = #{invokeState,jdbcType=VARCHAR},
+      invoke_result = #{invokeResult,jdbcType=VARCHAR}
+    where flight_center_api_id = #{flightCenterApiId,jdbcType=BIGINT}
+  </update>
+
+    <!-- self -->
+    <resultMap id="base_map" type="com.adatafun.base.data.center.po.DataCenterApiPO">
+        <id column="flight_center_api_id" jdbcType="BIGINT" property="flightCenterApiId"/>
+        <result column="api_name" jdbcType="VARCHAR" property="apiName"/>
+        <result column="request_param" jdbcType="VARCHAR" property="requestParam" />
+        <result column="customer_code" jdbcType="VARCHAR" property="customerCode"/>
+        <result column="invoke_state" jdbcType="VARCHAR" property="invokeState"/>
+        <result column="invoke_result" jdbcType="VARCHAR" property="invokeResult"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+
+    <sql id="insertName">
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="flightCenterApiId != null">
+                flight_center_api_id,
+            </if>
+            <if test="apiName != null">
+                api_name,
+            </if>
+            <if test="customerCode != null">
+                customer_code,
+            </if>
+            <if test="requestParam != null">
+                request_param,
+            </if>
+            <if test="invokeState != null">
+                invoke_state,
+            </if>
+            <if test="invokeResult != null">
+                invoke_result,
+            </if>
+            <if test="dataNum != null">
+                data_num,
+            </if>
+        </trim>
+    </sql>
+
+    <sql id="insertValue">
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="flightCenterApiId != null">
+                #{flightCenterApiId,jdbcType=BIGINT},
+            </if>
+            <if test="apiName != null">
+                #{apiName,jdbcType=VARCHAR},
+            </if>
+            <if test="customerCode != null">
+                #{customerCode,jdbcType=BIGINT},
+            </if>
+            <if test="requestParam != null">
+                #{requestParam,jdbcType=BIGINT},
+            </if>
+            <if test="invokeState != null">
+                #{invokeState,jdbcType=VARCHAR},
+            </if>
+            <if test="invokeResult != null">
+                #{invokeResult,jdbcType=VARCHAR},
+            </if>
+            <if test="dataNum != null">
+                #{dataNum,jdbcType=INTEGER},
+            </if>
+        </trim>
+    </sql>
+
+    <insert id="insertOne" parameterType="com.adatafun.base.data.center.po.DataCenterApiPO" useGeneratedKeys="true"
+            keyProperty="flightCenterApiId">
+        INSERT
+        INTO operator_data_center_api
+        <include refid="insertName"/>
+        VALUES
+        <include refid="insertValue"/>
+    </insert>
+
+    <select id="findDataCenterApiPOSByConditionAndPage" resultMap="base_map">
+        SELECT *
+        FROM operator_data_center_api
+        WHERE 1 =1
+        <if test="dataCenterApiPO.apiName != null">
+            AND api_name LIKE CONCAT ('%', #{dataCenterApiPO.apiName,jdbcType=VARCHAR}, '%'),
+        </if>
+        <if test="dataCenterApiPO.requestParam != null">
+            AND request_param LIKE CONCAT ('%', #{dataCenterApiPO.requestParam,jdbcType=VARCHAR}, '%'),
+        </if>
+        <if test="dataCenterApiPO.customerCode != null">
+            AND customer_code = #{dataCenterApiPO.customerCode,jdbcType=VARCHAR}
+        </if>
+        LIMIT #{pageEntity.startIndex,jdbcType=INTEGER}, #{pageEntity.rows,jdbcType=INTEGER}
+    </select>
+
+    <select id="countDataCenterApiPOSByCondition" resultType="int">
+        SELECT COUNT(flight_center_api_id)
+        FROM operator_data_center_api
+        WHERE 1 =1
+        <if test="dataCenterApiPO.apiName != null">
+            AND api_name LIKE CONCAT ('%', #{dataCenterApiPO.apiName,jdbcType=VARCHAR}, '%'),
+        </if>
+        <if test="dataCenterApiPO.requestParam != null">
+            AND request_param LIKE CONCAT ('%', #{dataCenterApiPO.requestParam,jdbcType=VARCHAR}, '%'),
+        </if>
+        <if test="dataCenterApiPO.customerCode != null">
+            AND customer_code = #{dataCenterApiPO.customerCode,jdbcType=VARCHAR}
+        </if>
+    </select>
+
+</mapper>

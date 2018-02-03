@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.adatafun.base.data.center.mapper.BlackListPOMapper">
+    <!-- by self -->
+
+    <sql id="insertName">
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="blackId != null">
+                black_id,
+            </if>
+            <if test="ip != null">
+                ip,
+            </if>
+        </trim>
+    </sql>
+
+    <sql id="insertValue">
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="blackId != null">
+                #{blackId,jdbcType=BIGINT},
+            </if>
+            <if test="ip != null">
+                #{ip,jdbcType=VARCHAR},
+            </if>
+        </trim>
+    </sql>
+
+    <resultMap id="base_map" type="com.adatafun.base.data.center.po.BlackListPO">
+        <id column="black_id" jdbcType="BIGINT" property="blackId" />
+        <result column="ip" jdbcType="VARCHAR" property="ip" />
+    </resultMap>
+
+    <select id="findBlackList" resultMap="base_map">
+        SELECT
+        *
+        FROM
+        base_black_list
+        WHERE
+        is_deleted = 0
+    </select>
+
+    <insert id="insertOne" parameterType="com.adatafun.base.data.center.po.BlackListPO" useGeneratedKeys="true" keyProperty="blackId">
+        INSERT
+        INTO
+        base_black_list
+        <include refid="insertName"/>
+        VALUES
+        <include refid="insertValue"/>
+    </insert>
+
+</mapper>
