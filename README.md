@@ -1,8 +1,8 @@
 数据中心项目
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.alibaba/druid-spring-boot-starter/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.alibaba/druid-spring-boot-starter/)
+[![Adatafun](https://maven-badges.herokuapp.com/maven-central/com.alibaba/druid-spring-boot-starter/badge.svg)](http://www.adatafun.com/)
 
 ## 创建目的
-提供一个稳定，健全的航班信息数据
+提供一个稳定，健全的航班，高铁等基本信息数据
 
 ## 注意问题
 1. 飞常准白名单问题

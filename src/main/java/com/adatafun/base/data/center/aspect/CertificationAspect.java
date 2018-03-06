@@ -32,9 +32,19 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.DataInputStream;
 import java.text.ParseException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Created by tiecheng on 2017/12/30.
+ * Controller 方法切面层
+ * 1. 获取IP地址，进行黑白名单的拦截
+ * 2. 请求方法的处理 update方法特殊处理
+ * 3. 请求的参数校验 基本参数&TOKEN
+ *
+ * @date: 2018/2/26 下午2:35
+ * @author: ironc
+ * @version: 1.0
  */
 @Aspect
 @Order(5)
@@ -43,10 +53,19 @@ public class CertificationAspect {
 
     private static Logger logger = LoggerFactory.getLogger(CertificationAspect.class);
 
+    /**
+     * 更新方法名称 特殊处理
+     */
     private static final String UPDATE_METHOD_NAME = "updateFlight";
 
+    /**
+     * 白名单
+     */
     private static final String WHITE_LIST = "white_list";
 
+    /**
+     * 黑名单
+     */
     private static final String BLACK_LIST = "black_list";
 
     @Autowired
@@ -74,6 +93,7 @@ public class CertificationAspect {
         Object returnValue;
 
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
         HttpServletRequest request = attributes.getRequest();
 
         String ip = request.getHeader("X-Forwarded-For");
@@ -112,7 +132,7 @@ public class CertificationAspect {
         DataCenterApiPO dataCenterApiPO = new DataCenterApiPO();
         dataCenterApiPO.setApiName(request.getRequestURL().toString());
 
-//         校验黑白名单
+        // 校验黑名单
         List<String> blacklist;
         String blacklistStr = RedisUtils.get(BLACK_LIST);
         if (!StringUtils.isBlank(blacklistStr)) {
@@ -136,6 +156,7 @@ public class CertificationAspect {
             return JSON.toJSONString(ResultUtils.result(Result.STATUS.UNKNOWN_CLIENT.getStatus(), Result.STATUS.UNKNOWN_CLIENT.getMsg()));
         }
 
+        // 校验白名单
         List<String> whitelist;
         String whitelistStr = RedisUtils.get(WHITE_LIST);
         if (!StringUtils.isBlank(whitelistStr)) {
@@ -200,17 +221,13 @@ public class CertificationAspect {
 
             FlightQueryDTO flightQueryDTO = (FlightQueryDTO) args[0];
 
-            Date depDate = flightQueryDTO.getDepDate();
-            Integer appId = flightQueryDTO.getAppId();
-            String token = flightQueryDTO.getToken();
-
-            if (depDate == null || depDate.before(DateUtils.getDate(Dictionary.DATE_FORMAT)) ||
-                    appId == null || appId.toString().length() != Dictionary.APPID_SIZE || StringUtils.isBlank(token)) {
+            if (!checkArgsNoTokenValue(flightQueryDTO)) {
                 dataCenterApiPO.setInvokeState(String.valueOf(Result.STATUS.BAD_REQUEST.getStatus()));
                 dataCenterApiPO.setInvokeResult(Result.STATUS.BAD_REQUEST.getMsg());
                 dataCenterApiPOMapper.insertOne(dataCenterApiPO);
                 return JSON.toJSONString(ResultUtils.result(Result.STATUS.BAD_REQUEST.getStatus(), Result.STATUS.BAD_REQUEST.getMsg()));
             }
+
             // 处理参数对象
             Map<String, Object> tokenParams = parseFlightQueryDTO(flightQueryDTO);
             String signContent = ParamUtils.getSignContent(tokenParams);
@@ -289,13 +306,72 @@ public class CertificationAspect {
         return result;
     }
 
+    /**
+     * 校验请求参数
+     *
+     * @param flightQueryDTO 查询对象
+     * @return
+     */
+    private boolean checkArgsNoTokenValue(FlightQueryDTO flightQueryDTO) {
+        if (flightQueryDTO.getDepDate() == null ||
+                flightQueryDTO.getAppId() == null ||
+                flightQueryDTO.getAppId().toString().length() != Dictionary.APPID_SIZE ||
+                StringUtils.isBlank(flightQueryDTO.getToken()) ||
+                !checkThreeCode(flightQueryDTO.getArrCode()) ||
+                !checkThreeCode(flightQueryDTO.getDepCode()) ||
+                !checkFlightNo(flightQueryDTO.getFlightNo())) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 检验三字码
+     *
+     * @param code 三字码
+     * @return
+     */
+    private boolean checkThreeCode(String code) {
+        return code != null ?
+                code.length() == Dictionary.THREE_CODE_SIZE ?
+                        checkString(code, "^[a-zA-Z]{3}") : false : true;
+    }
+
+    /**
+     * 校验航班号
+     *
+     * @param flightNo
+     * @return
+     */
+    private boolean checkFlightNo(String flightNo) {
+        return flightNo != null ?
+                flightNo.length() > 8 | flightNo.length() < 4 ?
+                        false : checkString(flightNo, "^[0-9a-zA-Z]{4,8}") : true;
+    }
+
+    /**
+     * 校验字符串
+     *
+     * @param str
+     * @param regex
+     * @return
+     */
+    private boolean checkString(String str, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(str);
+        return matcher.find();
+    }
+
     public static void main(String[] args) {
         //  处理黑白名单
-        String ip1 = "192.168.1.178";
-        String ip2 = "127.0.0.1";
-        String ip3 = "122.224.248.26";
-        String[] whitelistIps = new String[]{ip1, ip2, ip3};
-        List<String> whitelist = Arrays.asList(whitelistIps);
+//        String ip1 = "192.168.1.178";。
+//        String ip2 = "127.0.0.1";
+//        String ip3 = "122.224.248.26";
+//        String[] whitelistIps = new String[]{ip1, ip2, ip3};
+//        List<String> whitelist = Arrays.asList(whitelistIps);
+
+//        RedisUtils.set("whitelist", JSON.toJSONString(whitelist));
+
 //        RedisUtils.set("whitelist", JSON.toJSONString(whitelist));
 //        System.out.println(whitelist.contains(ip1));
 //        System.out.println(whitelist.contains("127.0.0.02"));
@@ -304,7 +380,17 @@ public class CertificationAspect {
 //        System.out.println(whitelist.contains(ip1));
 //        System.out.println(whitelist.contains("127.0.0.02"));
 
-        RedisUtils.set("whitelist", JSON.toJSONString(whitelist));
+        // 是否是航班号
+        System.out.println("期望值：true， 实际值：" + new CertificationAspect().checkFlightNo("MU2474"));
+        System.out.println("期望值：false， 实际值：" + new CertificationAspect().checkFlightNo("MU2474222"));
+        System.out.println("期望值：false， 实际值：" + new CertificationAspect().checkFlightNo("MU2"));
+        System.out.println("期望值：false， 实际值：" + new CertificationAspect().checkFlightNo("我是WXX"));
+        // 是否是三字码
+        System.out.println("期望值：true， 实际值：" + new CertificationAspect().checkThreeCode("HGH"));
+        System.out.println("期望值：false， 实际值：" + new CertificationAspect().checkThreeCode("FFFF"));
+        System.out.println("期望值：false， 实际值：" + new CertificationAspect().checkThreeCode("WX"));
+        System.out.println("期望值：false， 实际值：" + new CertificationAspect().checkThreeCode("我是X"));
+        System.out.println("期望值：false， 实际值：" + new CertificationAspect().checkThreeCode("X11"));
     }
 
 }

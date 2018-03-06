@@ -53,13 +53,17 @@ public class FlightController {
     @GetMapping(path = "/flightInfo", produces = {"application/json"})
     public String flightInfo(FlightQueryDTO flightQueryDTO) {
         try {
+            if (logger.isDebugEnabled()) {
+                StackTraceElement ste = new Throwable().getStackTrace()[1];
+                logger.debug(ste.getFileName() + ":Line" + ste.getLineNumber());
+            }
             /**
              * 参数校验
              */
             Date date = DateUtils.getDate(Dictionary.DATE_FORMAT);
 
             // 可以查询往前一天的航班 -- 跨天的航班处理
-            Date queryDate = DateUtils.addDay(date, -1);
+            Date queryDate = DateUtils.addDay(date, -30);
 
             if (flightQueryDTO.getDepDate().before(queryDate)) {
                 return JSON.toJSONString(ResultUtils.errorResult("只能查询当天或未来航班"), SerializerFeature.WriteMapNullValue);

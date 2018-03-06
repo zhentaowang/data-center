@@ -722,9 +722,6 @@
 
     <sql id="insertName">
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="flightId != null">
-                flight_id,
-            </if>
             <if test="updateFlag != null">
                 update_flag,
             </if>
@@ -886,9 +883,6 @@
 
     <sql id="insertValue">
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="flightId != null">
-                #{flightId,jdbcType=BIGINT},
-            </if>
             <if test="updateFlag != null">
                 #{updateFlag,jdbcType=VARCHAR},
             </if>

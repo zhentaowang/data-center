@@ -91,12 +91,11 @@ public interface FlightPOMapper {
                                     @Param("depAirportCode") String depCode, @Param("arrAirportCode") String arrCode);
 
     /**
-     *
      * @param flightNo
      * @param depDate
      * @return
      */
-    List<FlightPO> selectByFlightNoAndDepDate(@Param("flightNo") String flightNo,@Param("depDate") Date depDate);
+    List<FlightPO> selectByFlightNoAndDepDate(@Param("flightNo") String flightNo, @Param("depDate") Date depDate);
 
     /**
      * 插入或者更新
@@ -104,4 +103,5 @@ public interface FlightPOMapper {
      * @param flightPO
      */
     void insertOrUpdateByFourParams(FlightPO flightPO);
+
 }

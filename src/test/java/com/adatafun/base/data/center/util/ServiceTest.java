@@ -3,11 +3,16 @@ package com.adatafun.base.data.center.util;
 import com.adatafun.base.data.center.DataCenterApplication;
 import com.adatafun.base.data.center.mapper.FlightPushPOMapper;
 import com.adatafun.base.data.center.po.FlightPushPO;
+import com.adatafun.base.data.center.vo.FlightVO;
+import com.alibaba.fastjson.JSONArray;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by tiecheng on 2018/1/6.
@@ -30,6 +35,26 @@ public class ServiceTest {
         flightPushPO.setInvokeResult("{\"code\":\"200\"}");
         flightPushPO.setCustomerId(1L);
         flightPushPOMapper.insertOne(flightPushPO);
+    }
+
+    @Test
+    public void tt() throws InterruptedException {
+        List<FlightVO> result = new ArrayList<>();
+        String cacheValue = "111";
+        boolean isCacheValueEmpty = StringUtils.isBlank(cacheValue);
+        for (int i = 0; i < 3; i++) {
+            Thread.sleep(250);
+            if (isCacheValueEmpty) {
+                continue;
+            } else {
+                if ("-1".equals(cacheValue)) {
+                    break;
+                }
+//                result = JSONArray.parseArray(cacheValue, FlightVO.class);
+                System.out.println(cacheValue);
+                break;
+            }
+        }
     }
 
 }

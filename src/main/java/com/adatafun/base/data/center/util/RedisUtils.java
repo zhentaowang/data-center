@@ -91,7 +91,7 @@ public class RedisUtils {
      *
      * @return
      */
-    private static Jedis getJedis() {
+    public static Jedis getJedis() {
         try {
             if (jedisPool != null) {
                 jedis = jedisPool.getResource();
@@ -161,10 +161,13 @@ public class RedisUtils {
         }
         try {
             if (jedis.setnx(pre_fix + key, value) == 1) {
-
+                if (null != timeout) {
+                    jedis.expire(pre_fix + key, timeout);
+                }
+                return value;
             }
-            if (null != timeout) {
-                jedis.expire(pre_fix + key, timeout);
+            if (jedis.setnx(pre_fix + key, value) == 0) {
+                return "";
             }
         } catch (Exception e) {
             logger.error("设置单个值出错", e);

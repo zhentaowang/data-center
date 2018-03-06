@@ -8,8 +8,6 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * 
- *
  * @date: 2017/12/28 下午3:28
  * @author: ironc
  * @version: 1.0
@@ -86,14 +84,26 @@ public interface FlightServiceInterface {
     boolean custom(String flightNo, Date depDate, String depCode, String arrCode);
 
     /**
-     * 取消定制
-     * 航班中心层面的取消，会导致所有第三方都无法收到推送信息
+     * 定制航班
      *
-     * @param customerId 客户端ID
      * @param flightNo 航班号
      * @param depDate  出发日期（航班日期哦）
      * @param depCode  出发三字码
      * @param arrCode  到达三字码
+     * @param type     类型
+     * @return
+     */
+    boolean custom(String flightNo, Date depDate, String depCode, String arrCode, int type);
+
+    /**
+     * 取消定制
+     * 航班中心层面的取消，会导致所有第三方都无法收到推送信息
+     *
+     * @param customerId 客户端ID
+     * @param flightNo   航班号
+     * @param depDate    出发日期（航班日期哦）
+     * @param depCode    出发三字码
+     * @param arrCode    到达三字码
      * @return
      */
     String cancelCustom(Long customerId, String flightNo, Date depDate, String depCode, String arrCode);

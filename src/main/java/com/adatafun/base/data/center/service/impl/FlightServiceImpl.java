@@ -1,6 +1,7 @@
 package com.adatafun.base.data.center.service.impl;
 
 import com.adatafun.base.data.center.common.Dictionary;
+import com.adatafun.base.data.center.common.FlightInfoOperatorPool;
 import com.adatafun.base.data.center.conf.RedisConf;
 import com.adatafun.base.data.center.crawler.FeeyoCrawlerHandler;
 import com.adatafun.base.data.center.crawler.UmetripCrawlerHandler;
@@ -45,12 +46,29 @@ public class FlightServiceImpl implements FlightServiceInterface {
 
     private static final Logger logger = LoggerFactory.getLogger(FlightServiceImpl.class);
 
-    private static final String LOCAL_CONDITION_VALUE_SUCCESS = "1";
+    /**
+     * 航班号+日期 查询定制标识
+     * 每个航段都已经定制，为1
+     */
+    private static final String LOCAL_CONDITION_VALUE_CUSTOM = "1";
 
+    /**
+     * 航班信息查询 数据源无数据标识
+     */
     private static final String LOCAL_CONDITION_VALUE_ERROR = "-1";
 
+    /**
+     * 航班状态值
+     */
     private static final String FLIGHT_STATE_ARRIVAL = "到达";
 
+    private static final String FLIGHT_STATE_CANCEL = "取消";
+
+    private static final String FLIGHT_STATE_ADVANCE_CANCEL = "提前取消";
+
+    /**
+     * 十二个小时秒数
+     */
     private static final int TWELVE_HOURS_TIME = 12 * 60 * 60;
 
     @Autowired
@@ -67,21 +85,20 @@ public class FlightServiceImpl implements FlightServiceInterface {
 
     @Override
     public List<FlightVO> flightInfo(Date depDate, String flightNo) {
-        String redisKeyCondition = depDate + "_" + flightNo + "_condition";
         String redisKeyValue = depDate + "_" + flightNo;
-        String cacheCondition = RedisUtils.get(redisKeyCondition);
         String cacheValue = RedisUtils.get(redisKeyValue);
-        boolean isCacheConditionEmpty = StringUtils.isBlank(cacheCondition);
         boolean isCacheValueEmpty = StringUtils.isBlank(cacheValue);
         List<FlightVO> result = new ArrayList<>();
         try {
             Date date = DateUtils.getDate(Dictionary.DATE_FORMAT);
             if (depDate.after(date)) {
-                result = parseFuture(depDate, flightNo, redisKeyCondition, redisKeyValue,
-                        cacheCondition, cacheValue, isCacheConditionEmpty, isCacheValueEmpty);
+                result = parseFuture(depDate, flightNo, redisKeyValue,
+                        cacheValue, isCacheValueEmpty);
+            } else if (depDate.before(date)) {
+
             } else {
-                result = parseToday(depDate, flightNo, redisKeyCondition, redisKeyValue,
-                        cacheCondition, cacheValue, isCacheConditionEmpty, isCacheValueEmpty);
+                result = parseToday(depDate, flightNo, redisKeyValue,
+                        cacheValue, isCacheValueEmpty);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -94,167 +111,103 @@ public class FlightServiceImpl implements FlightServiceInterface {
         return result;
     }
 
-
     /**
-     * 1. 缓存条件存在，缓存值不存在，从本地数据库获取缓存值，更新缓存值，返回
-     * 2. 缓存条件存在，缓存值存在，直接返回
-     * 3. 缓存条件不存在，缓存值不存在，从飞常准查询，更新本地库、缓存值、缓存条件，处理后返回
-     * 4. 缓存条件不存在，缓存值存在，判断缓存数据条数为3，且全部定制则本地获取，更新缓存条件当天有效
+     * 当日航班信息解析
+     *
+     * @date: 2018/2/3 下午4:45
+     * @author: ironc
+     * @version: 1.0
      */
-    private List<FlightVO> parseToday(Date depDate, String flightNo, String redisKeyCondition, String redisKeyValue,
-                                      String cacheCondition, String cacheValue, boolean isCacheConditionEmpty, boolean isCacheValueEmpty) throws ParseException {
+    private List<FlightVO> parseToday(Date depDate, String flightNo, String redisKeyValue,
+                                      String cacheValue, boolean isCacheValueEmpty) throws ParseException {
         List<FlightVO> result = new ArrayList<>();
         String info;
-        if (!isCacheConditionEmpty) {
-            if (LOCAL_CONDITION_VALUE_ERROR.equals(cacheCondition)) {
+        if (!isCacheValueEmpty) {
+            if (LOCAL_CONDITION_VALUE_ERROR.equals(isCacheValueEmpty)) {
                 return result;
             }
-            if (LOCAL_CONDITION_VALUE_SUCCESS.equals(cacheCondition)) {
-                if (isCacheValueEmpty) {
-                    result = JSONArray.parseArray(JSON.toJSONString(flightPOMapper.selectByDepDateAndFlightNo(depDate, flightNo)), FlightVO.class);
-                    RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisFurture(depDate));
-                } else {
-                    result = JSONArray.parseArray(cacheValue, FlightVO.class);
-                }
+            if (LOCAL_CONDITION_VALUE_CUSTOM.equals(isCacheValueEmpty)) {
+                result = JSONArray.parseArray(JSON.toJSONString(flightPOMapper.selectByDepDateAndFlightNo(depDate, flightNo)), FlightVO.class);
+                return result;
             }
+            if (StringUtils.isBlank(cacheValue) || Objects.equals("[]", cacheValue)) {
+                result = JSONArray.parseArray(JSON.toJSONString(flightPOMapper.selectByDepDateAndFlightNo(depDate, flightNo)), FlightVO.class);
+                RedisUtils.set(redisKeyValue, JSON.toJSONString(result), RedisConf.CAN_REDIS_TIME);
+                return result;
+            }
+            result = JSONArray.parseArray(cacheValue, FlightVO.class);
         } else {
-            if (isCacheValueEmpty) {
-                info = feeyoSource.flightInfo(depDate, flightNo);
-                if (info.contains("error")) {
-                    if (JSONObject.parseObject(info).getInteger("error_code") == 10) {
-                        RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_ERROR, TWELVE_HOURS_TIME);
-                        return result;
-                    }
-                } else {
-                    List<FlightFeeyoDTO> flightFeeyoDTOS = JSONArray.parseArray(info, FlightFeeyoDTO.class);
-                    parseFromFeeyo(copyPropertiesBySelf(flightFeeyoDTOS));
-                    result = JSONArray.parseArray(JSON.toJSONString(flightPOMapper.selectByDepDateAndFlightNo(depDate, flightNo)), FlightVO.class);
-                    RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_SUCCESS, millisFurture(depDate));
-                    RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisFurture(depDate));
-                }
-            } else {
-                result = JSONArray.parseArray(cacheValue, FlightVO.class);
-                RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_SUCCESS, millisFurture(depDate));
-            }
+            info = feeyoSource.flightInfo(depDate, flightNo);
+            result = parseFeeyoSource(info, redisKeyValue, RedisConf.CAN_REDIS_TIME);
         }
         return result;
     }
 
     /**
-     * 1. 缓存条件存在，缓存值不存在，从本地数据库获取缓存值，更新缓存值，返回
-     * 2. 缓存条件存在，缓存值存在，直接返回
-     * 3. 缓存条件不存在，缓存值不存在，从飞常准查询，更新本地库、缓存值、缓存条件，处理后返回
-     * 4. 缓存条件不存在，缓存值存在，更新缓存条件，返回
+     * 未来航班信息解析
+     *
+     * @date: 2018/2/3 下午4:45
+     * @author: ironc
+     * @version: 1.0
      */
-    private List<FlightVO> parseFuture(Date depDate, String flightNo, String redisKeyCondition, String redisKeyValue,
-                                       String cacheCondition, String cacheValue, boolean isCacheConditionEmpty, boolean isCacheValueEmpty) throws ParseException {
+    private List<FlightVO> parseFuture(Date depDate, String flightNo, String redisKeyValue,
+                                       String cacheValue, boolean isCacheValueEmpty) throws ParseException {
         List<FlightVO> result = new ArrayList<>();
         String info;
-        if (!isCacheConditionEmpty) {
-            if (LOCAL_CONDITION_VALUE_ERROR.equals(cacheCondition)) {
+        if (!isCacheValueEmpty) {
+            if (LOCAL_CONDITION_VALUE_ERROR.equals(cacheValue)) {
                 return result;
             }
-            if (LOCAL_CONDITION_VALUE_SUCCESS.equals(cacheCondition)) {
-                if (isCacheValueEmpty) {
-                    result = JSONArray.parseArray(JSON.toJSONString(flightPOMapper.selectByDepDateAndFlightNo(depDate, flightNo)), FlightVO.class);
-                    RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisToday(depDate));
-                } else {
-                    result = JSONArray.parseArray(cacheValue, FlightVO.class);
-                }
+            if (LOCAL_CONDITION_VALUE_CUSTOM.equals(isCacheValueEmpty)) {
+                result = JSONArray.parseArray(JSON.toJSONString(flightPOMapper.selectByDepDateAndFlightNo(depDate, flightNo)), FlightVO.class);
+                return result;
+            }
+            if (StringUtils.isBlank(cacheValue) || Objects.equals("[]", cacheValue)) {
+                result = JSONArray.parseArray(
+                        JSON.toJSONString(
+                                flightPOMapper.selectByDepDateAndFlightNo(depDate, flightNo)), FlightVO.class);
+                RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisFurture(depDate));
             }
         } else {
-            if (isCacheValueEmpty) {
-                info = feeyoSource.flightInfo(depDate, flightNo);
-                result = parseFeeyoSource(info, depDate, flightNo, redisKeyCondition, redisKeyValue);
-            } else {
-                List<FlightPO> flightPOList = flightPOMapper.selectByDepDateAndFlightNo(depDate, flightNo);
-                boolean needQueryFromFeeyo = false;
-                for (FlightPO flightPO : flightPOList) {
-                    if (Short.parseShort("1") == flightPO.getIsCustom()) {
-                        needQueryFromFeeyo = true;
-                        break;
-                    }
-                }
-                if (needQueryFromFeeyo) {
-                    info = feeyoSource.flightInfo(depDate, flightNo);
-                    result = parseFeeyoSource(info, depDate, flightNo, redisKeyCondition, redisKeyValue);
-                } else {
-                    result = JSONArray.parseArray(cacheValue, FlightVO.class);
-                    RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_SUCCESS, millisToday(depDate));
-                }
-            }
+            info = feeyoSource.flightInfo(depDate, flightNo);
+            result = parseFeeyoSource(info, redisKeyValue, millisFurture(depDate));
         }
         return result;
     }
 
-    private List<FlightVO> parseFeeyoSource(String source, Date depDate, String flightNo, String redisKeyCondition, String redisKeyValue) throws ParseException {
+    /**
+     * 解析飞常准的返回数据
+     *
+     * @param source
+     * @param redisKeyValue
+     * @param time
+     * @return
+     * @throws ParseException
+     */
+    private List<FlightVO> parseFeeyoSource(String source, String redisKeyValue, int time) throws ParseException {
         List<FlightVO> result = new ArrayList<>();
         if (source.contains("error")) {
-            if (JSONObject.parseObject(source).getInteger("error_code") == 10) {
-                RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_ERROR, RedisConf.CAN_REDIS_TIME);
+            JSONObject object = JSONObject.parseObject(source);
+            if (Objects.equals(object.get("error_code"), Short.parseShort("5")) ||
+                    Objects.equals(object.get("error_code"), Short.parseShort("10"))) {
+                RedisUtils.set(redisKeyValue, LOCAL_CONDITION_VALUE_ERROR, TWELVE_HOURS_TIME);
             }
         } else {
             List<FlightFeeyoDTO> flightFeeyoDTOS = JSONArray.parseArray(source, FlightFeeyoDTO.class);
-            parseFromFeeyo(copyPropertiesBySelf(flightFeeyoDTOS));
-            result = JSONArray.parseArray(JSON.toJSONString(flightPOMapper.selectByDepDateAndFlightNo(depDate, flightNo)), FlightVO.class);
-            RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_SUCCESS, RedisConf.CAN_REDIS_TIME);
-            RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisToday(depDate));
+            List<FlightPO> flightPOList = copyPropertiesBySelf(flightFeeyoDTOS);
+            parseFromFeeyo(flightPOList);
+            result = JSONArray.parseArray(JSON.toJSONString(flightPOList), FlightVO.class);
+            RedisUtils.set(redisKeyValue, JSON.toJSONString(result), time);
         }
         return result;
     }
 
     @Override
     public List<FlightVO> flightInfo(Date depDate, String depCode, String arrCode) {
-        String redisKeyCondition = depDate + "_" + depCode + "_" + arrCode + "_condition";
-        String redisKeyValue = depDate + "_" + depCode + "_" + arrCode;
-        String cacheCondition = RedisUtils.get(redisKeyCondition);
-        String cacheValue = RedisUtils.get(redisKeyValue);
-        boolean isCacheConditionEmpty = StringUtils.isBlank(cacheCondition);
-        boolean isCacheValueEmpty = StringUtils.isBlank(cacheValue);
         List<FlightVO> result = new ArrayList<>();
         try {
-            Date date = DateUtils.getDate(Dictionary.DATE_FORMAT);
-            if (isCacheConditionEmpty) {
-                result = flightInfoFromUmetripByCrawler(depDate, depCode, arrCode);
-                if (result != null && result.size() <= 0) {
-                    String info = feeyoSource.flightInfo(depCode, arrCode, depDate);
-                    if (info.contains("error")) {
-                        RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_ERROR, TWELVE_HOURS_TIME);
-                    } else {
-                        List<FlightFeeyoDTO> flightFeeyoDTOS = JSONArray.parseArray(info, FlightFeeyoDTO.class);
-                        parseFromFeeyo(copyPropertiesBySelf(flightFeeyoDTOS));
-                        result = JSONArray.parseArray(JSON.toJSONString(flightPOMapper.selectByDepDateAndDepCodeAndArrCode(depDate, depCode, arrCode)), FlightVO.class);
-                        if (depDate.after(date)) {
-                            RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_SUCCESS, millisFurture(depDate));
-                            RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisFurture(depDate));
-                        } else {
-                            RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_SUCCESS, RedisConf.CAN_REDIS_TIME);
-                            RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisToday(depDate));
-                        }
-                    }
-                } else {
-                    if (depDate.after(date)) {
-                        RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_SUCCESS, millisFurture(depDate));
-                        RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisFurture(depDate));
-                    } else {
-                        RedisUtils.set(redisKeyCondition, LOCAL_CONDITION_VALUE_SUCCESS, RedisConf.CAN_REDIS_TIME);
-                        RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisToday(depDate));
-                    }
-                }
-            } else {
-                if (LOCAL_CONDITION_VALUE_ERROR.equals(cacheCondition)) {
-                    return result;
-                }
-                if (LOCAL_CONDITION_VALUE_SUCCESS.equals(cacheCondition)) {
-                    if (isCacheValueEmpty) {
-                        result = JSONArray.parseArray(JSON.toJSONString(flightPOMapper.selectByDepDateAndDepCodeAndArrCode(depDate, depCode, arrCode)), FlightVO.class);
-                        RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisFurture(depDate));
-                    } else {
-                        result = JSONArray.parseArray(cacheValue, FlightVO.class);
-                    }
-                    return result;
-                }
-            }
+            result = queryByCacheOrSource(depDate, depCode, arrCode);
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
             WebHook webHook = DingDingUtils.createWebHook(
@@ -263,6 +216,94 @@ public class FlightServiceImpl implements FlightServiceInterface {
                     null, false, "text");
             send(webHook);
             return result;
+        }
+    }
+
+    private List<FlightVO> queryByCacheOrSource(Date depDate, String depCode, String arrCode) throws Exception {
+        /**
+         * 获取缓存值
+         */
+        String redisKeyValue = depDate + "_" + depCode + "_" + arrCode;
+        List<FlightVO> result = new ArrayList<>();
+        String cacheValue = RedisUtils.get(redisKeyValue);
+        boolean isCacheValueEmpty = StringUtils.isBlank(cacheValue);
+
+        Date date = DateUtils.getDate(Dictionary.DATE_FORMAT);
+        /**
+         * 缓存值为空
+         */
+        if (isCacheValueEmpty) {
+            /**
+             * 通过Redis获取查询资格
+             */
+            String redisIsNeedQueryKeyValue = "lock:" + depDate + "_" + depCode + "_" + arrCode;
+            String nx = RedisUtils.setNx(redisIsNeedQueryKeyValue, "1", 60);
+            if ("1".equals(nx)) {
+                String info = feeyoSource.flightInfo(depCode, arrCode, depDate);
+                if (logger.isInfoEnabled()) {
+                    logger.info("===》飞常准查询到的数据是 {}", info);
+                }
+                if (info.contains("error")) {
+                    JSONObject object = JSONObject.parseObject(info);
+                    if (Objects.equals(object.get("error_code"), 5) ||
+                            Objects.equals(object.get("error_code"), 10)) {
+                        RedisUtils.set(redisKeyValue, LOCAL_CONDITION_VALUE_ERROR, TWELVE_HOURS_TIME);
+                        RedisUtils.del(redisIsNeedQueryKeyValue);
+                    }
+                } else {
+                    List<FlightFeeyoDTO> flightFeeyoDTOS = JSONArray.parseArray(info, FlightFeeyoDTO.class);
+                    List<FlightPO> flightPOList = copyPropertiesBySelf(flightFeeyoDTOS);
+                    result = JSONArray.parseArray(JSON.toJSONString(flightPOList), FlightVO.class);
+                    parseFromFeeyo(flightPOList);
+                    if (depDate.after(date)) {
+                        RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisFurture(depDate));
+                    } else if (depDate.before(date)) {
+
+                    } else {
+                        RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisToday(depDate));
+                    }
+                }
+            } else {
+                compareCache(depDate, depCode, arrCode);
+            }
+        } else {
+            if (LOCAL_CONDITION_VALUE_ERROR.equals(cacheValue)) {
+                return result;
+            }
+            // 异常补偿
+            if (Objects.equals("[]", cacheValue)) {
+                // 理论上是数据丢失 从本地数据库查询
+                result = JSONArray.parseArray(JSON.toJSONString(flightPOMapper.selectByDepDateAndDepCodeAndArrCode(depDate, depCode, arrCode)), FlightVO.class);
+                if (depDate.after(date)) {
+                    RedisUtils.set(redisKeyValue, JSON.toJSONString(result), millisFurture(depDate));
+                } else if (depDate.before(date)) {
+
+                } else {
+                    RedisUtils.set(redisKeyValue, JSON.toJSONString(result), RedisConf.CAN_REDIS_TIME);
+                }
+                return result;
+            }
+            result = JSONArray.parseArray(cacheValue, FlightVO.class);
+        }
+        return result;
+    }
+
+    private List<FlightVO> compareCache(Date depDate, String depCode, String arrCode) throws InterruptedException {
+        String redisKeyValue = depDate + "_" + depCode + "_" + arrCode;
+        List<FlightVO> result = new ArrayList<>();
+        String cacheValue = RedisUtils.get(redisKeyValue);
+        boolean isCacheValueEmpty = StringUtils.isBlank(cacheValue);
+        for (int i = 0; i < 3; i++) {
+            Thread.sleep(250);
+            if (isCacheValueEmpty) {
+                continue;
+            } else {
+                if (LOCAL_CONDITION_VALUE_ERROR.equals(cacheValue)) {
+                    break;
+                }
+                result = JSONArray.parseArray(cacheValue, FlightVO.class);
+                break;
+            }
         }
         return result;
     }
@@ -492,7 +533,7 @@ public class FlightServiceImpl implements FlightServiceInterface {
                 if (logger.isInfoEnabled()) {
                     logger.info("======》开始更新航班定制状态，飞常准返回结果：{}", custom);
                 }
-                flightPOMapper.updateIsCustomByFourParams(new Date(),  Dictionary.CONDITION_TRUE, flightNo, depDate, depCode, arrCode);
+                flightPOMapper.updateIsCustomByFourParams(new Date(), Dictionary.CONDITION_TRUE, flightNo, depDate, depCode, arrCode);
                 return true;
             } else {
                 if (logger.isInfoEnabled()) {
@@ -512,9 +553,86 @@ public class FlightServiceImpl implements FlightServiceInterface {
     }
 
     @Override
+    public boolean custom(String flightNo, Date depDate, String depCode, String arrCode, int type) {
+        try {
+            String redisKeyValue = depDate + "_" + flightNo;
+            FlightPO flightPO = flightPOMapper.selectByFourParams(flightNo, depDate, depCode, arrCode);
+            if ("到达".equals(flightPO.getFlightState()) ||
+                    "提前取消".equals(flightPO.getFlightState())) {
+                if (logger.isInfoEnabled()) {
+                    logger.info("======》航班已经到达，无法定制 ** 航班号：{}，出发三字码：{}，到达三字码：{}，航班日期：{}", flightNo, depCode, arrCode, depDate);
+                }
+                return true;
+            }
+
+            // 已定制，直接返回
+            if (Objects.equals(flightPO.getIsCustom(), Dictionary.CONDITION_TRUE)) {
+                if (logger.isInfoEnabled()) {
+                    logger.info("======》航班已经定制 ** 航班号：{}，出发三字码：{}，到达三字码：{}，航班日期：{}", flightNo, depCode, arrCode, depDate);
+                }
+                return true;
+            }
+
+            String custom = feeyoSource.custom(depCode, arrCode, depDate, flightNo);
+
+            // 定制成功（成功&重复定制）
+            JSONObject object = JSON.parseObject(custom);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("======》定制飞常准结果：{}", custom);
+            }
+
+            if (object.getInteger("error_code").equals(FeeyoSource.CUSTOM_SUCCESS_CODE) ||
+                    object.getInteger("error_code").equals(FeeyoSource.REPEAT_CUSTOM_CODE)) {
+                flightPOMapper.updateIsCustomByFourParams(new Date(), Dictionary.CONDITION_TRUE, flightNo, depDate, depCode, arrCode);
+                redisOperator(redisKeyValue, flightPO, depDate, type);
+                return true;
+            } else {
+                if (logger.isInfoEnabled()) {
+                    logger.info("======》向飞常准定制失败：{}", custom);
+                }
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            WebHook webHook = DingDingUtils.createWebHook(
+                    Dictionary.DING_DING_URL,
+                    e.getMessage(),
+                    null, false, "text");
+            send(webHook);
+            return false;
+        }
+    }
+
+    private void redisOperator(String redisKeyValue, FlightPO flightPO, Date depDate, int type) {
+        if (type > 3) {
+            return;
+        }
+        if (type == 1) {
+            RedisUtils.set(redisKeyValue, JSON.toJSONString(flightPO), saveRedisTime(depDate, 2));
+        }
+        if (type == 2 || type == 3) {
+            List<FlightPO> flightPOList = flightPOMapper.selectByDepDateAndFlightNo(flightPO.getDepDate(), flightPO.getFlightNo());
+            boolean isAllCustom = true;
+            for (FlightPO po : flightPOList) {
+                if (Dictionary.CONDITION_FALSE.equals(po.getIsCustom())) {
+                    isAllCustom = false;
+                    break;
+                }
+            }
+            if (isAllCustom) {
+                RedisUtils.set(redisKeyValue, JSON.toJSONString(flightPOList), saveRedisTime(depDate, 2));
+            }
+        }
+    }
+
+    @Override
     public String cancelCustom(Long customerId, String flightNo, Date depDate, String depCode, String arrCode) {
         return null;
     }
+
+    @Autowired
+    private FlightInfoOperatorPool flightInfoOperatorPool;
 
     /**
      * 处理飞常准的信息
@@ -522,20 +640,13 @@ public class FlightServiceImpl implements FlightServiceInterface {
      * @param flightPOList
      */
     private void parseFromFeeyo(List<FlightPO> flightPOList) throws ParseException {
-        for (FlightPO flightPO : flightPOList) {
-//            int count = flightPOMapper.existByFourParams(flightPO.getFlightNo(), flightPO.getDepDate(), flightPO.getDepAirportCode(), flightPO.getArrAirportCode());
-//
-//            if (count > 0) {
-//                flightPO.setUpdateTime(date);
-//                flightPOMapper.updateByFourParams(flightPO);
-//            } else {
-//                flightPO.setCreateTime(date);
-//                flightPOMapper.insertOne(flightPO);
-//            }
-            Date date = new Date();
-            flightPO.setUpdateTime(date);
-            flightPOMapper.insertOrUpdateByFourParams(flightPO);
-        }
+//        for (FlightPO flightPO : flightPOList) {
+//            Date date = new Date();
+//            flightPO.setUpdateTime(date);
+//            flightPOMapper.insertOrUpdateByFourParams(flightPO);
+//        }
+        // 异步处理
+        flightInfoOperatorPool.runOperator(flightPOList);
     }
 
     /**
@@ -703,6 +814,42 @@ public class FlightServiceImpl implements FlightServiceInterface {
         return (int) millis;
     }
 
+    /**
+     * 缓存时间
+     *
+     * @param depDate 出发时间
+     * @return
+     */
+    private Integer saveRedisTime(Date depDate) {
+        return saveRedisTime(depDate, 0);
+    }
+
+    /**
+     * 缓存时间
+     *
+     * @param depDate  出发时间
+     * @param overTime 超过时间(小时)
+     * @return
+     */
+    private Integer saveRedisTime(Date depDate, int overTime) {
+        Date date = new Date();
+        long millis = 0L;
+        try {
+            Date today = DateUtils.getDate(Dictionary.DATE_FORMAT);
+            depDate = depDate.after(today) ? depDate : DateUtils.addDay(depDate, 1);
+
+            if (overTime == 0) {
+                millis = depDate.getTime() - date.getTime() / 1000;
+            } else {
+                millis = (DateUtils.addHour(depDate, overTime).getTime() - date.getTime()) / 1000;
+            }
+            logger.info("===> 缓存时间 {} 小时 - {} 分 - {} 秒 ，", millis / 3600, (millis % 3600) / 60, (millis % 3600) % 60);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return (int) millis;
+    }
+
     private Integer millisFurture(Date depDate) {
         Date date = new Date();
         long millis = (depDate.getTime() - date.getTime()) / 1000;
@@ -712,12 +859,15 @@ public class FlightServiceImpl implements FlightServiceInterface {
 
     public static void main(String[] args) throws ParseException {
         // 6976秒
-        String time = "2018-01-18";
-        Date depDate = DateUtils.stringToDate(time, Dictionary.DATE_FORMAT);
-        FlightServiceImpl flightService = new FlightServiceImpl();
+//        String time = "2018-01-18";
+//        Date depDate = DateUtils.stringToDate(time, Dictionary.DATE_FORMAT);
+//        FlightServiceImpl flightService = new FlightServiceImpl();
+//
+//        flightService.millisToday(depDate);
+//        flightService.millisFurture(depDate);
+        String o = "1";
 
-        flightService.millisToday(depDate);
-        flightService.millisFurture(depDate);
+        List<FlightVO> flightVOList = JSONArray.parseArray(o, FlightVO.class);
     }
 
 
